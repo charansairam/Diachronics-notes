@@ -1,7 +1,21 @@
-The Diachronics notes is a collection of some pointers from the discussions I have with people working on Dravidian (sometimes, broadly, every group in the subcontinent) historical and comparative linguistics today and from material composed by those who worked on it in the past.
+# Diachronics notes
 
-I'd recommend readers to view this notes by cloning the repository and opening it as an Obsidian vault at the moment for best reading experience, especially for the sake of references and backlinks. I may host it as an easily navigable website at some point in the future but that is not a priority now.
+This repository now builds as a Quartz site from the Markdown and reference files in `content/`.
 
-Email me at `charansairam153{at}gmail{dot}com` in case you find any problems or errors with any material here.
+## Local preview
 
-If you are someone who is interested in diachronic study of (south-(central), northeastern) Dravidian languages, or (insular) Indo-Aryan I'd like to get in touch, email me at the aforementioned mailbox for the same (parenthesis denotes my specific area of interest).
+```bash
+npm ci
+npx quartz plugin install
+npx quartz build --serve
+```
+
+Then open `http://localhost:8080`.
+
+## Editing notes
+
+Open this repository folder itself as an Obsidian vault if you want Quartz and the notes to live in the same project root. The publishable notes live under `content/`.
+
+## Deployment
+
+GitHub Actions in `.github/workflows/deploy.yml` builds the site on pushes to `main`. In the repository settings, set Pages to use `GitHub Actions` as the source.
