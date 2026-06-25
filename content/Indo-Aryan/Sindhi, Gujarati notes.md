@@ -1,0 +1,2 @@
+- *kiːd̪r̩ɕ(–ɐkɐh?)* "of what kind (masculine?)" > \**kɪːd̺ə̆ɦəɣoː* > \**ke̝ːɾʱə̆ʊː* > Sindhi ***keːɾu*** "who", then what is Sindhi ***ki̞ːhəɖoː*** "of what kind"? If it's from *kiːd̪r̩ɕ–* again, what made it take a different sound change path?
+- *kiːd̪r̩ɕɐkɐm* "of what kind (neuter)" > \**kɵhsəjə̆um*(?) > \**kʰɕɨjə̆uw̃* > Old Gujarati *k͡ɕĭjuw̃* (we do see word-initial aspiration loss as in (\**mɐhäːʋɾ̩d̪̤ːɐkɐm* (?)>) \**mʱoʈʈʰuw̃* > ***moːʈũ*** "big", etc.) > **ʃũ** "what"
