@@ -1,0 +1,21 @@
+{
+  "name": "diachronics-linguistic-notation",
+  "version": "0.1.0",
+  "description": "Local Quartz transformer for linguistic notation conveniences in Diachronics notes",
+  "type": "module",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js"
+  },
+  "quartz": {
+    "name": "linguistic-notation",
+    "displayName": "Linguistic Notation",
+    "description": "Normalizes authoring shorthand for linguistic notation before Quartz parses Markdown.",
+    "category": "transformer",
+    "version": "0.1.0",
+    "quartzVersion": ">=5.0.0",
+    "defaultOrder": 15,
+    "defaultEnabled": true,
+    "defaultOptions": {}
+  }
+}
