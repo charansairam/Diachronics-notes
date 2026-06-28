@@ -103,8 +103,6 @@ plugins:
       position: beforeBody
       priority: 15
       display: all
-  - source: github:quartz-community/fonts
-    enabled: true
   - source: github:quartz-community/remove-draft
     enabled: true
   - source: github:quartz-community/alias-redirects
