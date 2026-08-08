@@ -34,6 +34,15 @@ function normalizePathForLookup(value) {
   return value.replace(/\\/g, "/");
 }
 
+function resolveRepositoryRoot(contentDir) {
+  try {
+    const repo = Repository.discover(contentDir);
+    return repo.workdir() ?? path.resolve(contentDir, "..");
+  } catch {
+    return path.resolve(contentDir, "..");
+  }
+}
+
 function loadSnapshotMap(rootDir) {
   const snapshotPath = path.join(rootDir, "quartz-data", "note-date-snapshot.json");
 
@@ -80,13 +89,14 @@ export const CreatedModifiedDate = (userOpts) => {
       return [
         () => {
           let repo;
-          let repositoryWorkdir;
-          const snapshotMap = loadSnapshotMap(ctx.argv.directory);
+          const repositoryRoot = resolveRepositoryRoot(ctx.argv.directory);
+          let repositoryWorkdir = repositoryRoot;
+          const snapshotMap = loadSnapshotMap(repositoryRoot);
 
           if (opts.priority.includes("git")) {
             try {
               repo = Repository.discover(ctx.argv.directory);
-              repositoryWorkdir = repo.workdir() ?? ctx.argv.directory;
+              repositoryWorkdir = repo.workdir() ?? repositoryRoot;
             } catch {
               console.log(
                 styleText(
@@ -105,7 +115,7 @@ export const CreatedModifiedDate = (userOpts) => {
             const data = file.data;
             const fp = data.relativePath;
             const fullFp = data.filePath;
-            const snapshotEntry = getSnapshotEntry(snapshotMap, ctx.argv.directory, fullFp, fp);
+            const snapshotEntry = getSnapshotEntry(snapshotMap, repositoryRoot, fullFp, fp);
 
             for (const source of opts.priority) {
               if (source === "filesystem") {
