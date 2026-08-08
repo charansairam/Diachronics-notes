@@ -315,6 +315,24 @@ function trySymlink(target: string, linkPath: string): void {
   }
 }
 
+function linkOrCopyLocalPlugin(sourceDir: string, pluginDir: string): "symlink" | "copy" {
+  try {
+    fs.symlinkSync(sourceDir, pluginDir, "dir")
+    return "symlink"
+  } catch (err: unknown) {
+    const code = (err as NodeJS.ErrnoException).code
+    if (code !== "EPERM" && code !== "EACCES") {
+      throw err
+    }
+
+    fs.cpSync(sourceDir, pluginDir, {
+      recursive: true,
+      force: true,
+    })
+    return "copy"
+  }
+}
+
 function linkPeerDependencies(pluginDir: string): void {
   const pkgPath = path.join(pluginDir, "package.json")
   if (!fs.existsSync(pkgPath)) return
@@ -459,10 +477,11 @@ export async function installPlugin(
       console.log(styleText("cyan", `→`), `Linking ${spec.name} from ${spec.repo}...`)
     }
 
-    fs.symlinkSync(spec.repo, pluginDir, "dir")
+    const mode = linkOrCopyLocalPlugin(spec.repo, pluginDir)
 
     if (options.verbose) {
-      console.log(styleText("green", `✓`), `Linked ${spec.name}`)
+      const verb = mode === "symlink" ? "Linked" : "Copied"
+      console.log(styleText("green", `✓`), `${verb} ${spec.name}`)
     }
 
     return { pluginDir, nativeDeps: collectNativeDeps(pluginDir) }

@@ -18,8 +18,9 @@
     "format": "npx prettier . --write",
     "test": "tsx --test",
     "profile": "0x -D prof ./quartz/bootstrap-cli.mjs build --concurrency=1",
+    "sync-note-dates": "node ./scripts/sync-note-dates.mjs",
     "install-plugins": "npx tsx ./quartz/plugins/loader/install-plugins.ts",
-    "prebuild": "npm run install-plugins"
+    "prebuild": "npm run sync-note-dates && npm run install-plugins"
   },
   "engines": {
     "npm": ">=10.9.2",

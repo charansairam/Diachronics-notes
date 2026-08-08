@@ -1,0 +1,38 @@
+{
+  "name": "@charansairam/created-modified-date",
+  "version": "0.1.0",
+  "description": "Local Quartz plugin that resolves note dates from a tracked snapshot before git fallback.",
+  "type": "module",
+  "license": "MIT",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "peerDependencies": {
+    "@napi-rs/simple-git": "^0.1.19",
+    "@quartz-community/types": "*"
+  },
+  "quartz": {
+    "name": "created-modified-date",
+    "displayName": "Created/Modified Date",
+    "category": "transformer",
+    "version": "1.0.0",
+    "quartzVersion": ">=5.0.0",
+    "requiresInstall": true,
+    "dependencies": [],
+    "defaultOrder": 10,
+    "defaultEnabled": true,
+    "defaultOptions": {
+      "priority": [
+        "frontmatter",
+        "git",
+        "filesystem"
+      ],
+      "defaultDateType": "published"
+    }
+  }
+}

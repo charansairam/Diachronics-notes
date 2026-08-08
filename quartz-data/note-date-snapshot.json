@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "generatedAt": "2026-08-08T13:22:37.193Z",
+  "source": "local-filesystem",
+  "files": {
+    "index.md": {
+      "created": "2026-06-16T04:57:40.863Z",
+      "modified": "2026-06-28T12:08:24.939Z",
+      "published": "2026-06-16T04:57:40.863Z"
+    },
+    "pages.base": {
+      "created": "2026-06-28T11:47:38.745Z",
+      "modified": "2026-06-28T13:26:21.249Z",
+      "published": "2026-06-28T11:47:38.745Z"
+    },
+    "Indo-Aryan/Sindhi, Gujarati notes.md": {
+      "created": "2026-06-25T04:09:33.638Z",
+      "modified": "2026-06-28T08:21:42.429Z",
+      "published": "2026-06-25T04:09:33.638Z"
+    },
+    "Dravidian/South-Central Dravidian/Telugu/Telugu lemmata etymology.md": {
+      "created": "2026-08-08T06:32:28.672Z",
+      "modified": "2026-08-08T06:56:04.353Z",
+      "published": "2026-08-08T06:32:28.672Z"
+    },
+    "Dravidian/South-Central Dravidian/Gondi/Mandla Gondi oblique markers synchronically varying between –t– and –n–.md": {
+      "created": "2026-06-06T15:52:31.115Z",
+      "modified": "2026-06-28T08:08:07.819Z",
+      "published": "2026-06-06T15:52:31.115Z"
+    }
+  }
+}
