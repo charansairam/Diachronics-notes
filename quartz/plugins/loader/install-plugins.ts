@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { installPlugins, parsePluginSource } from "./gitLoader.js"
+import { cleanPlugins, installPlugins, parsePluginSource } from "./gitLoader.js"
 import config from "../../../quartz.js"
 
 async function main() {
@@ -12,6 +12,10 @@ async function main() {
   }
 
   console.log(`Installing ${externalPlugins.length} plugin(s) from Git...`)
+
+  // Treat checked-in plugin sources as the build input of record.
+  // Reinstall into a clean plugin tree so builds cannot reuse stale artifacts.
+  cleanPlugins()
 
   const specs = externalPlugins.map((source: string) => parsePluginSource(source))
   const installed = await installPlugins(specs, { verbose: true })
