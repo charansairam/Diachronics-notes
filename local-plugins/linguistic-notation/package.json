@@ -1,12 +1,16 @@
 {
-  "name": "diachronics-linguistic-notation",
+  "name": "@charansairam/linguistic-notation",
   "version": "0.1.0",
-  "description": "Local Quartz transformer for linguistic notation conveniences in Diachronics notes",
+  "description": "Local Quartz transformer for linguistic notation conveniences in Diachronics notes.",
   "type": "module",
-  "main": "./index.js",
   "exports": {
-    ".": "./index.js"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
   },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "quartz": {
     "name": "linguistic-notation",
     "displayName": "Linguistic Notation",

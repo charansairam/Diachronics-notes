@@ -6,10 +6,10 @@ export const manifest = {
   quartzVersion: ">=5.0.0",
   category: "transformer",
   defaultOrder: 15,
-}
+};
 
 const SMALL_CAPS_MAP = {
-  a: "ᴀ",
+  a: "ᴀ".replace("ᴀ", "ᴀ"),
   b: "ʙ",
   c: "ᴄ",
   d: "ᴅ",
@@ -34,7 +34,7 @@ const SMALL_CAPS_MAP = {
   w: "ᴡ",
   y: "ʏ",
   z: "ᴢ",
-}
+};
 
 const SUPERSCRIPT_MAP = {
   0: "⁰",
@@ -77,7 +77,7 @@ const SUPERSCRIPT_MAP = {
   "=": "⁼",
   "(": "⁽",
   ")": "⁾",
-}
+};
 
 const SUBSCRIPT_MAP = {
   0: "₀",
@@ -112,56 +112,56 @@ const SUBSCRIPT_MAP = {
   "=": "₌",
   "(": "₍",
   ")": "₎",
-}
+};
 
-const SMALL_CAP_MARKER = /\{\{(?:sc|smallcaps):([\s\S]*?)\}\}/gi
-const SUPERSCRIPT_MARKER = /\{\{(?:sup|super):([\s\S]*?)\}\}/gi
-const SUBSCRIPT_MARKER = /\{\{(?:sub|subscript):([\s\S]*?)\}\}/gi
-const warned = new Set()
+const SMALL_CAP_MARKER = /\{\{(?:sc|smallcaps):([\s\S]*?)\}\}/gi;
+const SUPERSCRIPT_MARKER = /\{\{(?:sup|super):([\s\S]*?)\}\}/gi;
+const SUBSCRIPT_MARKER = /\{\{(?:sub|subscript):([\s\S]*?)\}\}/gi;
+const warned = new Set();
 
 function normalizeWithMap(kind, text, map, lowercaseLetters = true) {
-  const unmapped = new Set()
+  const unmapped = new Set();
   const converted = Array.from(text).map((char) => {
-    const key = lowercaseLetters ? char.toLowerCase() : char
+    const key = lowercaseLetters ? char.toLowerCase() : char;
     if (map[key]) {
-      return map[key]
+      return map[key];
     }
 
     if (/[A-Za-z0-9]/.test(char)) {
-      unmapped.add(char)
+      unmapped.add(char);
     }
 
-    return char
-  })
+    return char;
+  });
 
   if (unmapped.size > 0) {
-    const warnKey = `${kind}:${Array.from(unmapped).sort().join(",")}`
+    const warnKey = `${kind}:${Array.from(unmapped).sort().join(",")}`;
     if (!warned.has(warnKey)) {
-      warned.add(warnKey)
+      warned.add(warnKey);
       console.warn(
         `[linguistic-notation] No Unicode ${kind} mapping for: ${Array.from(unmapped).sort().join(", ")}. Leaving those characters unchanged.`,
-      )
+      );
     }
   }
 
-  return converted.join("")
+  return converted.join("");
 }
 
 function replaceMarkers(src, marker, kind, map, lowercaseLetters = true) {
   return src.replace(marker, (_match, body) =>
     normalizeWithMap(kind, body.trim(), map, lowercaseLetters),
-  )
+  );
 }
 
 export default function LinguisticNotation() {
   return {
     name: "LinguisticNotation",
     textTransform(_ctx, src) {
-      let out = src
-      out = replaceMarkers(out, SMALL_CAP_MARKER, "small-cap", SMALL_CAPS_MAP)
-      out = replaceMarkers(out, SUPERSCRIPT_MARKER, "superscript", SUPERSCRIPT_MAP)
-      out = replaceMarkers(out, SUBSCRIPT_MARKER, "subscript", SUBSCRIPT_MAP)
-      return out
+      let out = src;
+      out = replaceMarkers(out, SMALL_CAP_MARKER, "small-cap", SMALL_CAPS_MAP);
+      out = replaceMarkers(out, SUPERSCRIPT_MARKER, "superscript", SUPERSCRIPT_MAP);
+      out = replaceMarkers(out, SUBSCRIPT_MARKER, "subscript", SUBSCRIPT_MAP);
+      return out;
     },
-  }
+  };
 }
