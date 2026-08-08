@@ -1,0 +1,22 @@
+filters:
+  and:
+    - file.path.startsWith("Diachronics-notes/content/")
+    - '!file.path.contains("index")'
+    - '!file.path.contains("References")'
+views:
+  - type: table
+    name: Pages
+    order:
+      - file.name
+      - file.ctime
+      - file.mtime
+      - file.tags
+    sort:
+      - property: file.tags
+        direction: ASC
+      - property: file.ctime
+        direction: ASC
+    columnSize:
+      file.name: 309
+      file.ctime: 145
+      file.mtime: 144
