@@ -1,0 +1,63 @@
+name: Update Quartz plugins
+
+on:
+  schedule:
+    - cron: "11 0 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Cache Quartz plugins
+        uses: actions/cache@v4
+        with:
+          path: .quartz/plugins
+          key: ${{ runner.os }}-plugins-${{ hashFiles('quartz.lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-plugins-
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Update Quartz plugins from config
+        run: node ./quartz/bootstrap-cli.mjs plugin install --from-config --latest
+
+      - name: Validate updated plugin set
+        run: node ./quartz/bootstrap-cli.mjs build
+
+      - name: Create pull request
+        uses: peter-evans/create-pull-request@v8
+        with:
+          branch: automation/quartz-plugin-updates
+          commit-message: "deps(quartz): refresh community plugin lockfile"
+          title: "deps(quartz): update community plugin lockfile"
+          body: |
+            Refreshes `quartz.lock.json` against the plugin sources in `quartz.config.yaml`.
+
+            The workflow installs the latest configured Quartz plugins, runs a full Quartz build, and only then opens or updates this PR.
+          labels: |
+            dependencies
+            quartz
+          add-paths: |
+            quartz.lock.json
