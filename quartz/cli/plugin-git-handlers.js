@@ -1,7 +1,7 @@
 import fs from "fs"
 import path from "path"
 import os from "os"
-import { exec as execCb } from "child_process"
+import { exec as execCb, execFile as execFileCb } from "child_process"
 import { styleText, promisify } from "util"
 import {
   readPluginsJson,
@@ -25,21 +25,23 @@ import { symlinkOrCopySync } from "./helpers.js"
 const INTERNAL_EXPORTS = new Set(["manifest", "default"])
 
 const execAsync = promisify(execCb)
+const execFileAsync = promisify(execFileCb)
 
 async function cloneWithSubdirAsync({ url, ref, subdir, pluginDir }) {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "quartz-plugin-"))
   try {
+    const cloneArgs = ["clone", "--depth", "1"]
     if (ref) {
-      await execAsync(`git clone --depth 1 --branch ${ref} "${url}" "${tmpDir}"`)
-    } else {
-      await execAsync(`git clone --depth 1 "${url}" "${tmpDir}"`)
+      cloneArgs.push("--branch", ref)
     }
+    cloneArgs.push(url, tmpDir)
+    await execFileAsync("git", cloneArgs)
     const subdirPath = path.join(tmpDir, subdir)
     if (!fs.existsSync(subdirPath)) {
       throw new Error(`Subdirectory "${subdir}" not found in cloned repository`)
     }
     fs.cpSync(subdirPath, pluginDir, { recursive: true })
-    const { stdout } = await execAsync("git rev-parse HEAD", { cwd: tmpDir })
+    const { stdout } = await execFileAsync("git", ["rev-parse", "HEAD"], { cwd: tmpDir })
     return stdout.trim()
   } finally {
     fs.rmSync(tmpDir, { recursive: true, force: true })
@@ -305,11 +307,11 @@ async function regeneratePluginIndex() {
   )
   for (const [pluginName, { overridable }] of pluginExports) {
     if (overridable.length === 0) continue
-    const escapedName = pluginName.replace(/"/g, '\\"')
-    lines.push(`  "${escapedName}": {`)
+    const pluginNameLiteral = JSON.stringify(pluginName)
+    lines.push(`  ${pluginNameLiteral}: {`)
     for (const n of overridable) {
       lines.push(
-        `    ${n}: (...args: unknown[]) => { componentRegistry.setOptionOverrides("${escapedName}", args[0] as Record<string, unknown>); },`,
+        `    ${n}: (...args: unknown[]) => { componentRegistry.setOptionOverrides(${pluginNameLiteral}, args[0] as Record<string, unknown>); },`,
       )
     }
     lines.push(`  },`)
@@ -325,9 +327,9 @@ async function regeneratePluginIndex() {
     const conflicting = overridable.filter((n) => (nameCount.get(n) ?? 0) > 1)
 
     if (unique.length > 0) {
-      const escapedName = pluginName.replace(/"/g, '\\"')
+      const pluginNameLiteral = JSON.stringify(pluginName)
       for (const n of unique) {
-        lines.push(`export const ${n} = plugins["${escapedName}"].${n}`)
+        lines.push(`export const ${n} = plugins[${pluginNameLiteral}][${JSON.stringify(n)}]`)
       }
     }
 

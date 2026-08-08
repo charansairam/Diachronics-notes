@@ -1,6 +1,6 @@
 import fs from "fs"
 import path from "path"
-import { execSync } from "child_process"
+import { execSync, spawnSync } from "child_process"
 import git from "isomorphic-git"
 import http from "isomorphic-git/http/node"
 import { styleText } from "util"
@@ -36,6 +36,21 @@ export interface GitPluginSpec {
 export type PluginInstallSource = string | GitPluginSpec
 
 const PLUGINS_CACHE_DIR = path.join(process.cwd(), ".quartz", "plugins")
+
+function runCommand(command: string, args: string[], options: { cwd?: string; stdio?: "inherit" | "pipe" } = {}): void {
+  const result = spawnSync(command, args, {
+    cwd: options.cwd,
+    stdio: options.stdio ?? "pipe",
+    encoding: "utf-8",
+    shell: false,
+    timeout: 120_000,
+  })
+
+  if (result.status !== 0) {
+    const errorOutput = result.stderr?.trim() || result.stdout?.trim()
+    throw new Error(errorOutput || `${command} exited with code ${result.status ?? "unknown"}`)
+  }
+}
 
 /**
  * Check if a source string refers to a local file path.
@@ -533,8 +548,12 @@ export async function installPlugin(
       fs.rmSync(tmpDir, { recursive: true })
     }
 
-    const branchArg = spec.ref ? ` --branch ${spec.ref}` : ""
-    execSync(`git clone --depth 1${branchArg} "${spec.repo}" "${tmpDir}"`, { stdio: "pipe" })
+    const cloneArgs = ["clone", "--depth", "1"]
+    if (spec.ref) {
+      cloneArgs.push("--branch", spec.ref)
+    }
+    cloneArgs.push(spec.repo, tmpDir)
+    runCommand("git", cloneArgs)
 
     const subdirPath = path.join(tmpDir, spec.subdir)
     if (!fs.existsSync(subdirPath)) {
@@ -545,8 +564,12 @@ export async function installPlugin(
     fs.renameSync(subdirPath, pluginDir)
     fs.rmSync(tmpDir, { recursive: true })
   } else {
-    const branchArg = spec.ref ? ` --branch ${spec.ref}` : ""
-    execSync(`git clone --depth 1${branchArg} "${spec.repo}" "${pluginDir}"`, { stdio: "pipe" })
+    const cloneArgs = ["clone", "--depth", "1"]
+    if (spec.ref) {
+      cloneArgs.push("--branch", spec.ref)
+    }
+    cloneArgs.push(spec.repo, pluginDir)
+    runCommand("git", cloneArgs)
   }
 
   buildInstalledPlugin(pluginDir, spec.name, options.verbose)
@@ -995,11 +1018,11 @@ export async function regeneratePluginIndex(options: { verbose?: boolean } = {})
   )
   for (const [pluginName, { overridable }] of pluginExports) {
     if (overridable.length === 0) continue
-    const escapedName = pluginName.replace(/"/g, '\\"')
-    lines.push(`  "${escapedName}": {`)
+    const pluginNameLiteral = JSON.stringify(pluginName)
+    lines.push(`  ${pluginNameLiteral}: {`)
     for (const n of overridable) {
       lines.push(
-        `    ${n}: (...args: unknown[]) => { componentRegistry.setOptionOverrides("${escapedName}", args[0] as Record<string, unknown>); },`,
+        `    ${n}: (...args: unknown[]) => { componentRegistry.setOptionOverrides(${pluginNameLiteral}, args[0] as Record<string, unknown>); },`,
       )
     }
     lines.push(`  },`)
@@ -1015,9 +1038,9 @@ export async function regeneratePluginIndex(options: { verbose?: boolean } = {})
     const conflicting = overridable.filter((n) => (nameCount.get(n) ?? 0) > 1)
 
     if (unique.length > 0) {
-      const escapedName = pluginName.replace(/"/g, '\\"')
+      const pluginNameLiteral = JSON.stringify(pluginName)
       for (const n of unique) {
-        lines.push(`export const ${n} = plugins["${escapedName}"].${n}`)
+        lines.push(`export const ${n} = plugins[${pluginNameLiteral}][${JSON.stringify(n)}]`)
       }
     }
 

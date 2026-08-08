@@ -511,14 +511,37 @@ export async function handleBuild(argv) {
         res.end()
       }
 
-      let fp = req.url?.split("?")[0] ?? "/"
+      const outputRoot = path.resolve(argv.output)
+      const safeOutputExists = (candidatePath) => {
+        const normalized = path.posix.normalize(candidatePath)
+        const safeRelative = `.${normalized.startsWith("/") ? normalized : "/" + normalized}`
+        const resolved = path.resolve(outputRoot, safeRelative)
+
+        if (resolved !== outputRoot && !resolved.startsWith(outputRoot + path.sep)) {
+          return false
+        }
+
+        return fs.existsSync(resolved)
+      }
+
+      const rawFp = req.url?.split("?")[0] ?? "/"
+      let fp = rawFp
+      try {
+        fp = decodeURIComponent(rawFp)
+      } catch {
+        fp = rawFp
+      }
+      fp = path.posix.normalize(fp)
+      if (!fp.startsWith("/")) {
+        fp = "/" + fp
+      }
 
       // handle redirects
       if (fp.endsWith("/")) {
         // /trailing/
         // does /trailing/index.html exist? if so, serve it
         const indexFp = path.posix.join(fp, "index.html")
-        if (fs.existsSync(path.posix.join(argv.output, indexFp))) {
+        if (safeOutputExists(indexFp)) {
           req.url = fp
           return serve()
         }
@@ -528,7 +551,7 @@ export async function handleBuild(argv) {
         if (path.extname(base) === "") {
           base += ".html"
         }
-        if (fs.existsSync(path.posix.join(argv.output, base))) {
+        if (safeOutputExists(base)) {
           return redirect(fp.slice(0, -1))
         }
       } else {
@@ -538,14 +561,14 @@ export async function handleBuild(argv) {
         if (path.extname(base) === "") {
           base += ".html"
         }
-        if (fs.existsSync(path.posix.join(argv.output, base))) {
+        if (safeOutputExists(base)) {
           req.url = fp
           return serve()
         }
 
         // does /regular/index.html exist? if so, redirect to /regular/
         let indexFp = path.posix.join(fp, "index.html")
-        if (fs.existsSync(path.posix.join(argv.output, indexFp))) {
+        if (safeOutputExists(indexFp)) {
           return redirect(fp + "/")
         }
       }
@@ -636,7 +659,7 @@ export async function handleUpgrade(argv) {
     if (hasLockfile) {
       try {
         fs.copyFileSync(lockfileBackup, LOCKFILE_PATH)
-        execSync(`git add ${LOCKFILE_PATH}`)
+        spawnSync("git", ["add", LOCKFILE_PATH], { stdio: "pipe" })
         const remaining = execSync("git diff --name-only --diff-filter=U", {
           encoding: "utf-8",
         }).trim()
