@@ -21,6 +21,7 @@ export const manifest = {
 
 const VIEWER_ASSET_DIR = "static/pdf-deeplinks"
 const PDFJS_BUILD_DIR = "node_modules/pdfjs-dist/build"
+const PDFJS_WASM_DIR = "node_modules/pdfjs-dist/wasm"
 
 const VIEWER_JS = String.raw`import * as pdfjsLib from "./pdf.mjs"
 
@@ -63,7 +64,10 @@ window.addEventListener("resize", debounce(() => renderPage(), 100))
 boot().catch((error) => showError(error))
 
 async function boot() {
-  const loadingTask = pdfjsLib.getDocument({ url: data.pdfHref })
+  const loadingTask = pdfjsLib.getDocument({
+    url: data.pdfHref,
+    wasmUrl: data.wasmUrl,
+  })
   state.document = await loadingTask.promise
   state.totalPages = state.document.numPages
   state.pageNumber = Math.min(Math.max(1, state.pageNumber), state.totalPages)
@@ -210,6 +214,7 @@ body {
 
 body.is-preview {
   background: transparent;
+  overflow: hidden;
 }
 
 .viewer-shell {
@@ -236,8 +241,10 @@ body.is-preview .viewer-shell {
 }
 
 body.is-preview .viewer-toolbar {
-  padding: 0.5rem 0.75rem;
-  font-size: 0.9rem;
+  padding: 0.4rem 0.55rem;
+  font-size: 0.8rem;
+  position: static;
+  gap: 0.45rem;
 }
 
 .viewer-toolbar-left,
@@ -249,6 +256,17 @@ body.is-preview .viewer-toolbar {
 
 .viewer-title {
   font-weight: 600;
+}
+
+body.is-preview .viewer-toolbar-right {
+  display: none;
+}
+
+body.is-preview .viewer-title {
+  max-width: 15rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .viewer-toolbar button,
@@ -273,7 +291,7 @@ body.is-preview .viewer-toolbar {
 }
 
 body.is-preview .viewer-main {
-  padding: 0.5rem;
+  padding: 0.35rem;
 }
 
 .pdf-stage {
@@ -281,6 +299,10 @@ body.is-preview .viewer-main {
   background: #fff;
   box-shadow: 0 24px 50px rgba(0, 0, 0, 0.25);
   max-width: 100%;
+}
+
+body.is-preview .pdf-stage {
+  box-shadow: none;
 }
 
 .pdf-canvas {
@@ -346,6 +368,8 @@ function createViewerHtml(routeSlug, parsed) {
   const cssHref = buildPdfAssetHref(routeSlug, `${VIEWER_ASSET_DIR}/viewer.css`)
   const jsHref = buildPdfAssetHref(routeSlug, `${VIEWER_ASSET_DIR}/viewer.mjs`)
   const pdfHref = buildPdfAssetHref(routeSlug, parsed.pdfPath)
+  const wasmHref = buildPdfAssetHref(routeSlug, `${VIEWER_ASSET_DIR}/wasm`)
+  const wasmUrl = wasmHref.endsWith("/") ? wasmHref : `${wasmHref}/`
   const rawHref = `${pdfHref}#page=${parsed.page}`
   const title = viewerTitleFor(parsed)
   const selection = parsed.selection
@@ -388,6 +412,7 @@ function createViewerHtml(routeSlug, parsed) {
         page: parsed.page,
         selection,
         pdfHref,
+        wasmUrl,
         rawHref,
       }),
     )}</script>
@@ -424,6 +449,13 @@ async function copyOutput(ctx, slug, sourcePath) {
   await fs.mkdir(path.dirname(outputPath), { recursive: true })
   await fs.copyFile(sourcePath, outputPath)
   return outputPath
+}
+
+async function copyDirectoryOutput(ctx, slug, sourceDir) {
+  const outputDir = path.join(ctx.argv.output, slug)
+  await fs.mkdir(path.dirname(outputDir), { recursive: true })
+  await fs.cp(sourceDir, outputDir, { recursive: true, force: true })
+  return outputDir
 }
 
 function collectEntries(content) {
@@ -465,6 +497,7 @@ export default function PdfDeepLinkViewer() {
       )
       outputs.push(await writeOutput(ctx, `${VIEWER_ASSET_DIR}/viewer.mjs`, "", VIEWER_JS))
       outputs.push(await writeOutput(ctx, `${VIEWER_ASSET_DIR}/viewer.css`, "", VIEWER_CSS))
+      outputs.push(await copyDirectoryOutput(ctx, `${VIEWER_ASSET_DIR}/wasm`, PDFJS_WASM_DIR))
 
       for (const [routeSlug, parsed] of entries) {
         outputs.push(await writeOutput(ctx, routeSlug, ".html", createViewerHtml(routeSlug, parsed)))
