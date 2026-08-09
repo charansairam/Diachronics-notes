@@ -1,0 +1,25 @@
+{
+  "name": "@charansairam/pdf-deeplink-viewer",
+  "version": "0.1.0",
+  "description": "Local Quartz emitter that generates static viewer pages and assets for Obsidian-style PDF deep links.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "quartz": {
+    "name": "pdf-deeplink-viewer",
+    "displayName": "PDF Deep Link Viewer",
+    "description": "Emits viewer pages and bundled assets for exact PDF page and selection rendering.",
+    "category": "emitter",
+    "version": "0.1.0",
+    "quartzVersion": ">=5.0.0",
+    "defaultOrder": 15,
+    "defaultEnabled": true,
+    "defaultOptions": {}
+  }
+}

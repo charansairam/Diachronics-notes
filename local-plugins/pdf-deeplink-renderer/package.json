@@ -1,0 +1,25 @@
+{
+  "name": "@charansairam/pdf-deeplink-renderer",
+  "version": "0.1.0",
+  "description": "Local Quartz transformer that rewrites rendered PDF deep links to the custom viewer routes.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "quartz": {
+    "name": "pdf-deeplink-renderer",
+    "displayName": "PDF Deep Link Renderer",
+    "description": "Rewrites rendered PDF deep links to generated viewer pages and marks them for custom previews.",
+    "category": "transformer",
+    "version": "0.1.0",
+    "quartzVersion": ">=5.0.0",
+    "defaultOrder": 65,
+    "defaultEnabled": true,
+    "defaultOptions": {}
+  }
+}

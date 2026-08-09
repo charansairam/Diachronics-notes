@@ -55,6 +55,32 @@ async function mouseEnterHandler(
     return
   }
 
+  if (link.dataset.pdfDeeplink === "true") {
+    const popoverElement = document.createElement("div")
+    popoverElement.id = popoverId
+    popoverElement.classList.add("popover")
+    const popoverInner = document.createElement("div")
+    popoverInner.classList.add("popover-inner")
+    popoverInner.dataset.contentType = "application/pdf+deeplink"
+    popoverElement.appendChild(popoverInner)
+
+    const frame = document.createElement("iframe")
+    frame.src = link.href
+    popoverInner.appendChild(frame)
+
+    if (!!document.getElementById(popoverId)) {
+      return
+    }
+
+    document.body.appendChild(popoverElement)
+    if (activeAnchor !== this) {
+      return
+    }
+
+    showPopover(popoverElement)
+    return
+  }
+
   const response = await fetchCanonical(targetUrl).catch((err) => {
     console.error(err)
   })
