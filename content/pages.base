@@ -2,8 +2,8 @@ filters:
   and:
     - file.ctime != null
     - file.path.endsWith(".md")
-    - file.name != "index"
-    - file.name != "404"
+    - file.basename != "index"
+    - file.basename != "404"
     - '!file.inFolder("References")'
     - '!file.inFolder("tags")'
 views:
@@ -11,7 +11,8 @@ views:
     name: Pages
     filters:
       and:
-        - file.inFolder("Diachronics-notes/content")
+        - file.ext == "md"
+        - '!file.hasTag("index")'
     order:
       - file.name
       - file.ctime
