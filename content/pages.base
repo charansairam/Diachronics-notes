@@ -1,6 +1,6 @@
 filters:
   and:
-    - 'file.created != null'
+    - 'file.ctime != null'
     - 'file.path.endsWith(".md")'
     - 'file.name != "index"'
     - 'file.name != "404"'
@@ -11,15 +11,15 @@ views:
     name: Pages
     order:
       - file.name
-      - file.created
-      - file.modified
+      - file.ctime
+      - file.mtime
       - file.tags
     sort:
       - property: file.tags
         direction: ASC
-      - property: file.created
+      - property: file.ctime
         direction: ASC
     columnSize:
       file.name: 309
-      file.created: 145
-      file.modified: 144
+      file.ctime: 145
+      file.mtime: 144
