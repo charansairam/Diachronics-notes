@@ -1,23 +1,26 @@
 filters:
   and:
-    - 'file.ctime != null'
-    - 'file.path.endsWith(".md")'
-    - 'file.name != "index"'
-    - 'file.name != "404"'
+    - file.ctime != null
+    - file.path.endsWith(".md")
+    - file.name != "index"
+    - file.name != "404"
     - '!file.inFolder("References")'
     - '!file.inFolder("tags")'
 views:
   - type: table
     name: Pages
+    filters:
+      and:
+        - file.inFolder("Diachronics-notes/content")
     order:
       - file.name
       - file.ctime
       - file.mtime
       - file.tags
     sort:
-      - property: file.tags
-        direction: ASC
       - property: file.ctime
+        direction: DESC
+      - property: file.tags
         direction: ASC
     columnSize:
       file.name: 309

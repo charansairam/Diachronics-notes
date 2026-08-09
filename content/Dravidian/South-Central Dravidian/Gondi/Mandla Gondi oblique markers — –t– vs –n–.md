@@ -1,3 +1,12 @@
+---
+title: Mandla Gondi oblique markers — –t– vs –n–
+description: nature of oblique marker variation in mandla gondi
+tags:
+  - etymology
+  - morphology
+  - gondi
+  - south-central-dravidian
+---
 ## References:
 1.  [[Gondi Grammar by HD Williamson.pdf#page=7&selection=89,0,119,1|Gondi Grammar by HD Williamson, page 7]]
 2.  [[Gondi Grammar by HD Williamson.pdf#page=8&selection=142,0,186,1|Gondi Grammar by HD Williamson, page 8]]
