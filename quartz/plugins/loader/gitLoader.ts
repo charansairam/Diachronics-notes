@@ -997,15 +997,16 @@ export async function regeneratePluginIndex(options: { verbose?: boolean } = {})
 
   // Type re-exports
   for (const [pluginName, { types }] of pluginExports) {
-    if (types.length > 0) {
-      lines.push(`export type { ${types.join(", ")} } from "./${pluginName}"`)
+    const safeTypes = uniqueSafeIdentifiers(types)
+    if (safeTypes.length > 0) {
+      lines.push(`export type { ${safeTypes.join(", ")} } from "./${pluginName}"`)
     }
   }
 
   // Direct re-exports for non-overridable values (constants, utility functions, etc.)
   for (const [pluginName, { passthrough }] of pluginExports) {
     if (passthrough.length === 0) continue
-    const unique = passthrough.filter((n) => (nameCount.get(n) ?? 0) === 1)
+    const unique = uniqueSafeIdentifiers(passthrough).filter((n) => (nameCount.get(n) ?? 0) === 1)
     if (unique.length > 0) {
       lines.push(`export { ${unique.join(", ")} } from "./${pluginName}"`)
     }
@@ -1022,7 +1023,7 @@ export async function regeneratePluginIndex(options: { verbose?: boolean } = {})
     lines.push(`  ${pluginNameLiteral}: {`)
     for (const n of overridable) {
       lines.push(
-        `    ${n}: (...args: unknown[]) => { componentRegistry.setOptionOverrides(${pluginNameLiteral}, args[0] as Record<string, unknown>); },`,
+        `    [${JSON.stringify(n)}]: (...args: unknown[]) => { componentRegistry.setOptionOverrides(${pluginNameLiteral}, args[0] as Record<string, unknown>); },`,
       )
     }
     lines.push(`  },`)
@@ -1034,8 +1035,9 @@ export async function regeneratePluginIndex(options: { verbose?: boolean } = {})
   for (const [pluginName, { overridable }] of pluginExports) {
     if (overridable.length === 0) continue
 
-    const unique = overridable.filter((n) => (nameCount.get(n) ?? 0) === 1)
+    const unique = uniqueSafeIdentifiers(overridable).filter((n) => (nameCount.get(n) ?? 0) === 1)
     const conflicting = overridable.filter((n) => (nameCount.get(n) ?? 0) > 1)
+    const unsafe = overridable.filter((n) => !isSafeIdentifier(n))
 
     if (unique.length > 0) {
       const pluginNameLiteral = JSON.stringify(pluginName)
@@ -1049,6 +1051,15 @@ export async function regeneratePluginIndex(options: { verbose?: boolean } = {})
         console.warn(
           styleText("yellow", `⚠`),
           `Export "${n}" conflicts across plugins — use plugins["${pluginName}"].${n} in quartz.ts`,
+        )
+      }
+    }
+
+    if (unsafe.length > 0 && options.verbose) {
+      for (const n of unsafe) {
+        console.warn(
+          styleText("yellow", `âš `),
+          `Skipping top-level export "${n}" from plugin "${pluginName}" because it is not a safe JavaScript identifier.`,
         )
       }
     }
@@ -1073,6 +1084,64 @@ const INTERNAL_EXPORTS = new Set(["manifest", "default"])
 
 const PLUGIN_TYPE_PATTERN =
   /Quartz(?:Emitter|Transformer|Filter|PageType)Plugin|QuartzComponentConstructor|\(.*\)\s*=>\s*QuartzComponent\b/
+
+const IDENTIFIER_PATTERN = /^[A-Za-z_$][A-Za-z0-9_$]*$/
+const RESERVED_IDENTIFIERS = new Set([
+  "await",
+  "break",
+  "case",
+  "catch",
+  "class",
+  "const",
+  "continue",
+  "debugger",
+  "default",
+  "delete",
+  "do",
+  "else",
+  "enum",
+  "export",
+  "extends",
+  "false",
+  "finally",
+  "for",
+  "function",
+  "if",
+  "implements",
+  "import",
+  "in",
+  "instanceof",
+  "interface",
+  "let",
+  "new",
+  "null",
+  "package",
+  "private",
+  "protected",
+  "public",
+  "return",
+  "static",
+  "super",
+  "switch",
+  "this",
+  "throw",
+  "true",
+  "try",
+  "typeof",
+  "var",
+  "void",
+  "while",
+  "with",
+  "yield",
+])
+
+function isSafeIdentifier(name: string): boolean {
+  return IDENTIFIER_PATTERN.test(name) && !RESERVED_IDENTIFIERS.has(name)
+}
+
+function uniqueSafeIdentifiers(names: string[]): string[] {
+  return names.filter((name) => isSafeIdentifier(name))
+}
 
 function resolveOriginalName(exportName: string, dtsContent: string): string {
   const aliasPattern = new RegExp(`(\\w+)\\s+as\\s+${exportName}\\b`)

@@ -1,4 +1,3 @@
-import { createHash } from "crypto"
 import { FullSlug, joinSegments } from "../../util/path"
 import { QuartzEmitterPlugin } from "../types"
 
@@ -24,7 +23,15 @@ import { transform as transpile } from "esbuild"
 import { write } from "./helpers"
 
 function hashContent(content: string | Buffer): string {
-  return createHash("sha256").update(content).digest("hex").slice(0, 8)
+  const bytes = typeof content === "string" ? Buffer.from(content) : content
+  let hash = 0x811c9dc5
+
+  for (const byte of bytes) {
+    hash ^= byte
+    hash = Math.imul(hash, 0x01000193) >>> 0
+  }
+
+  return hash.toString(16).padStart(8, "0")
 }
 
 type ComponentResources = {

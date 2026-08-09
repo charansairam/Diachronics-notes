@@ -512,16 +512,38 @@ export async function handleBuild(argv) {
       }
 
       const outputRoot = path.resolve(argv.output)
-      const safeOutputExists = (candidatePath) => {
+      const normalizeOutputRequestPath = (candidatePath) => {
         const normalized = path.posix.normalize(candidatePath)
-        const safeRelative = `.${normalized.startsWith("/") ? normalized : "/" + normalized}`
-        const resolved = path.resolve(outputRoot, safeRelative)
+        const withLeadingSlash = normalized.startsWith("/") ? normalized : `/${normalized}`
+        return path.posix.normalize(withLeadingSlash)
+      }
 
-        if (resolved !== outputRoot && !resolved.startsWith(outputRoot + path.sep)) {
-          return false
+      const listOutputPaths = () => {
+        const discovered = new Set()
+        const stack = [{ fsPath: outputRoot, webPath: "" }]
+
+        while (stack.length > 0) {
+          const current = stack.pop()
+          if (!current) continue
+
+          for (const entry of fs.readdirSync(current.fsPath, { withFileTypes: true })) {
+            const childFsPath = path.join(current.fsPath, entry.name)
+            const childWebPath = `${current.webPath}/${entry.name}`
+
+            if (entry.isDirectory()) {
+              stack.push({ fsPath: childFsPath, webPath: childWebPath })
+            } else if (entry.isFile()) {
+              discovered.add(childWebPath)
+            }
+          }
         }
 
-        return fs.existsSync(resolved)
+        return discovered
+      }
+
+      const safeOutputExists = (candidatePath) => {
+        const normalized = normalizeOutputRequestPath(candidatePath)
+        return listOutputPaths().has(normalized)
       }
 
       const rawFp = req.url?.split("?")[0] ?? "/"

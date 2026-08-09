@@ -23,6 +23,63 @@ import {
 import { symlinkOrCopySync } from "./helpers.js"
 
 const INTERNAL_EXPORTS = new Set(["manifest", "default"])
+const IDENTIFIER_PATTERN = /^[A-Za-z_$][A-Za-z0-9_$]*$/
+const RESERVED_IDENTIFIERS = new Set([
+  "await",
+  "break",
+  "case",
+  "catch",
+  "class",
+  "const",
+  "continue",
+  "debugger",
+  "default",
+  "delete",
+  "do",
+  "else",
+  "enum",
+  "export",
+  "extends",
+  "false",
+  "finally",
+  "for",
+  "function",
+  "if",
+  "implements",
+  "import",
+  "in",
+  "instanceof",
+  "interface",
+  "let",
+  "new",
+  "null",
+  "package",
+  "private",
+  "protected",
+  "public",
+  "return",
+  "static",
+  "super",
+  "switch",
+  "this",
+  "throw",
+  "true",
+  "try",
+  "typeof",
+  "var",
+  "void",
+  "while",
+  "with",
+  "yield",
+])
+
+function isSafeIdentifier(name) {
+  return IDENTIFIER_PATTERN.test(name) && !RESERVED_IDENTIFIERS.has(name)
+}
+
+function uniqueSafeIdentifiers(names) {
+  return names.filter((name) => isSafeIdentifier(name))
+}
 
 const execAsync = promisify(execCb)
 const execFileAsync = promisify(execFileCb)
@@ -286,15 +343,16 @@ async function regeneratePluginIndex() {
 
   // Type re-exports
   for (const [pluginName, { types }] of pluginExports) {
-    if (types.length > 0) {
-      lines.push(`export type { ${types.join(", ")} } from "./${pluginName}"`)
+    const safeTypes = uniqueSafeIdentifiers(types)
+    if (safeTypes.length > 0) {
+      lines.push(`export type { ${safeTypes.join(", ")} } from "./${pluginName}"`)
     }
   }
 
   // Direct re-exports for non-overridable values (constants, utility functions, etc.)
   for (const [pluginName, { passthrough }] of pluginExports) {
     if (passthrough.length === 0) continue
-    const unique = passthrough.filter((n) => (nameCount.get(n) ?? 0) === 1)
+    const unique = uniqueSafeIdentifiers(passthrough).filter((n) => (nameCount.get(n) ?? 0) === 1)
     if (unique.length > 0) {
       lines.push(`export { ${unique.join(", ")} } from "./${pluginName}"`)
     }
@@ -311,7 +369,7 @@ async function regeneratePluginIndex() {
     lines.push(`  ${pluginNameLiteral}: {`)
     for (const n of overridable) {
       lines.push(
-        `    ${n}: (...args: unknown[]) => { componentRegistry.setOptionOverrides(${pluginNameLiteral}, args[0] as Record<string, unknown>); },`,
+        `    [${JSON.stringify(n)}]: (...args: unknown[]) => { componentRegistry.setOptionOverrides(${pluginNameLiteral}, args[0] as Record<string, unknown>); },`,
       )
     }
     lines.push(`  },`)
@@ -323,7 +381,7 @@ async function regeneratePluginIndex() {
   for (const [pluginName, { overridable }] of pluginExports) {
     if (overridable.length === 0) continue
 
-    const unique = overridable.filter((n) => (nameCount.get(n) ?? 0) === 1)
+    const unique = uniqueSafeIdentifiers(overridable).filter((n) => (nameCount.get(n) ?? 0) === 1)
     const conflicting = overridable.filter((n) => (nameCount.get(n) ?? 0) > 1)
 
     if (unique.length > 0) {
