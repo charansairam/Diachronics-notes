@@ -85,5 +85,14 @@
     "prettier": "^3.9.6",
     "tsx": "^4.23.9",
     "typescript": "^5.9.3"
+  },
+  "overrides": {
+    "immutable": "^5.1.9",
+    "@parcel/watcher": {
+      "picomatch": "^4.0.5"
+    },
+    "micromatch": {
+      "picomatch": "^2.3.2"
+    }
   }
 }
