@@ -99,13 +99,15 @@ plugins:
         - aliases
       excludedProperties: []
       hidePropertiesView: false
-      delimiters: "---"
+      delimiters: ---
       language: yaml
     order: 5
     layout:
       position: beforeBody
       priority: 15
       display: all
+  - source: ./plugins/bases-page
+    enabled: true
   - source: github:quartz-community/remove-draft
     enabled: true
   - source: github:quartz-community/alias-redirects

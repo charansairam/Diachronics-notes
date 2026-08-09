@@ -1,22 +1,25 @@
 filters:
   and:
-    - file.path.startsWith("Diachronics-notes/content/")
-    - '!file.path.contains("index")'
-    - '!file.path.contains("References")'
+    - 'file.created != null'
+    - 'file.path.endsWith(".md")'
+    - 'file.name != "index"'
+    - 'file.name != "404"'
+    - '!file.inFolder("References")'
+    - '!file.inFolder("tags")'
 views:
   - type: table
     name: Pages
     order:
       - file.name
-      - file.ctime
-      - file.mtime
+      - file.created
+      - file.modified
       - file.tags
     sort:
       - property: file.tags
         direction: ASC
-      - property: file.ctime
+      - property: file.created
         direction: ASC
     columnSize:
       file.name: 309
-      file.ctime: 145
-      file.mtime: 144
+      file.created: 145
+      file.modified: 144
