@@ -1927,5 +1927,5 @@ function evaluateFilter(node, context) {
 }
 
 export { S, compile, evaluate, evaluateFilter, k, l, resolvePropertyValue, slugifyFilePath, slugifyPath, transformLink, u2 as u };
-//# sourceMappingURL=chunk-X2AZ5GOJ.js.map
-//# sourceMappingURL=chunk-X2AZ5GOJ.js.map
+//# sourceMappingURL=chunk-KR5S3WCU.js.map
+//# sourceMappingURL=chunk-KR5S3WCU.js.map

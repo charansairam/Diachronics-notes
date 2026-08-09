@@ -1,11 +1,11 @@
 import { createRequire } from 'module';
-import { BasesBody_default, resolveBasesEntries, registerBuiltinViews, i18n, ViewSelector } from './chunk-4HXXKSJ4.js';
-export { BasesBody_default as BasesBody } from './chunk-4HXXKSJ4.js';
-import { registerCustomViews, viewRegistry } from './chunk-2AUMER56.js';
-export { registerCustomViews, viewRegistry } from './chunk-2AUMER56.js';
-import { slugifyFilePath, k, S, l } from './chunk-X2AZ5GOJ.js';
-export { compile, evaluate, evaluateFilter, resolvePropertyValue, slugifyPath, transformLink } from './chunk-X2AZ5GOJ.js';
-import { __commonJS, __require, __export, __toESM } from './chunk-TDUJOYTU.js';
+import { BasesBody_default, resolveBasesEntries, registerBuiltinViews, i18n, ViewSelector } from './chunk-NXOFQIFD.js';
+export { BasesBody_default as BasesBody } from './chunk-NXOFQIFD.js';
+import { registerCustomViews, viewRegistry } from './chunk-2JAX2A6E.js';
+export { registerCustomViews, viewRegistry } from './chunk-2JAX2A6E.js';
+import { slugifyFilePath, k, S, l } from './chunk-KR5S3WCU.js';
+export { compile, evaluate, evaluateFilter, resolvePropertyValue, slugifyPath, transformLink } from './chunk-KR5S3WCU.js';
+import { __commonJS, __require, __export, __toESM } from './chunk-OMCNQZBM.js';
 import default2, { join } from 'path';
 import default3 from 'process';
 import { fileURLToPath } from 'url';
@@ -18408,8 +18408,7 @@ function createBasesCodeblockTransform(opts) {
   let builtinViewsRegistered = false;
   return (root, _slug, componentData) => {
     const fileData = componentData.fileData;
-    const basesBlocks = fileData.basesBlocks;
-    if (!basesBlocks || basesBlocks.length === 0) return;
+    const basesBlocks = fileData.basesBlocks ?? [];
     if (!builtinViewsRegistered) {
       registerBuiltinViews();
       builtinViewsRegistered = true;
@@ -18423,26 +18422,8 @@ function createBasesCodeblockTransform(opts) {
     const slug = componentData.fileData.slug ?? "";
     const allSlugs = componentData.ctx?.allSlugs ?? [];
     const linkResolution = opts?.linkResolution ?? "shortest";
-    visit(root, "element", (node, index2, parent) => {
-      if (!parent || index2 === void 0) return;
-      const blockIndexStr = node.properties?.["dataQzBasesCodeblock"];
-      if (blockIndexStr === void 0) return;
-      const blockIndex = Number(blockIndexStr);
-      const basesData = basesBlocks[blockIndex];
-      if (!basesData) return;
-      const viewName = node.properties?.["dataQzBasesView"];
-      const fd = componentData.fileData;
-      const selfPath = fd.relativePath ?? fd.filePath ?? slug;
-      const selfName = selfPath.split("/").pop()?.replace(/\.[^.]+$/, "") ?? "";
-      const selfLastSlash = selfPath.lastIndexOf("/");
-      const selfContext = {
-        file: {
-          name: selfName,
-          path: selfPath,
-          folder: selfLastSlash >= 0 ? selfPath.slice(0, selfLastSlash) : "",
-          ext: selfPath.slice(selfPath.lastIndexOf(".") + 1)
-        }
-      };
+    const baseEmbedLookup = buildRuntimeBaseLookup(allFiles);
+    const renderIntoNode = (node, basesData, viewName, selfContext) => {
       const baseSlugs = new Set(allSlugs.filter((s3) => s3.endsWith(".base")));
       const baseAliases = new Set([...baseSlugs].map((s3) => s3.replace(/\.base$/, "")));
       const contentSlugs = allSlugs.filter((s3) => !baseSlugs.has(s3) && !baseAliases.has(s3));
@@ -18462,8 +18443,58 @@ function createBasesCodeblockTransform(opts) {
       node.tagName = "div";
       node.properties = { class: "bases-page bases-inline" };
       node.children = fragment.children;
+    };
+    visit(root, "element", (node, index2, parent) => {
+      if (!parent || index2 === void 0) return;
+      const classNames = node.properties?.className ?? [];
+      const transcludeUrl = node.properties?.dataUrl;
+      if (node.tagName === "blockquote" && classNames.includes("transclude") && transcludeUrl) {
+        const matchedBase = baseEmbedLookup.get(transcludeUrl);
+        if (matchedBase) {
+          const block = node.properties?.dataBlock ?? "";
+          const viewName2 = block.startsWith("#") ? block.slice(1) : void 0;
+          renderIntoNode(node, matchedBase.basesData, viewName2, matchedBase.selfContext);
+          return;
+        }
+      }
+      const blockIndexStr = node.properties?.["dataQzBasesCodeblock"];
+      if (blockIndexStr === void 0) return;
+      const blockIndex = Number(blockIndexStr);
+      const basesData = basesBlocks[blockIndex];
+      if (!basesData) return;
+      const viewName = node.properties?.["dataQzBasesView"];
+      const fd = componentData.fileData;
+      const selfPath = fd.relativePath ?? fd.filePath ?? slug;
+      const selfName = selfPath.split("/").pop()?.replace(/\.[^.]+$/, "") ?? "";
+      const selfLastSlash = selfPath.lastIndexOf("/");
+      const selfContext = {
+        file: {
+          name: selfName,
+          path: selfPath,
+          folder: selfLastSlash >= 0 ? selfPath.slice(0, selfLastSlash) : "",
+          ext: selfPath.slice(selfPath.lastIndexOf(".") + 1)
+        }
+      };
+      renderIntoNode(node, basesData, viewName, selfContext);
     });
   };
+}
+function buildRuntimeBaseLookup(allFiles) {
+  const lookup = /* @__PURE__ */ new Map();
+  for (const entry of allFiles) {
+    const basesData = entry.basesData;
+    const slug = typeof entry.slug === "string" ? entry.slug : void 0;
+    if (!basesData || !slug) continue;
+    const payload = {
+      basesData,
+      selfContext: entry.basesSelfContext
+    };
+    lookup.set(slug, payload);
+    if (slug.endsWith(".base")) {
+      lookup.set(slug.replace(/\.base$/, ""), payload);
+    }
+  }
+  return lookup;
 }
 function renderBasesInline(basesData, allFiles, locale, localeStrings, opts, slug, allSlugs, linkResolution, viewName, selfContext) {
   let views = basesData.views ?? [];

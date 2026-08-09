@@ -14,7 +14,11 @@ var __require = /* @__PURE__ */ ((x) => typeof require$1 !== "undefined" ? requi
   throw Error('Dynamic require of "' + x + '" is not supported');
 });
 var __commonJS = (cb, mod) => function __require2() {
-  return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+  try {
+    return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+  } catch (e) {
+    throw mod = 0, e;
+  }
 };
 var __export = (target, all) => {
   for (var name in all)
@@ -38,5 +42,5 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 ));
 
 export { __commonJS, __export, __require, __toESM };
-//# sourceMappingURL=chunk-TDUJOYTU.js.map
-//# sourceMappingURL=chunk-TDUJOYTU.js.map
+//# sourceMappingURL=chunk-OMCNQZBM.js.map
+//# sourceMappingURL=chunk-OMCNQZBM.js.map
