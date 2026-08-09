@@ -1019,11 +1019,11 @@ export async function regeneratePluginIndex(options: { verbose?: boolean } = {})
   )
   for (const [pluginName, { overridable }] of pluginExports) {
     if (overridable.length === 0) continue
-    const pluginNameLiteral = JSON.stringify(pluginName)
+    const pluginNameLiteral = toSafeJsStringLiteral(pluginName)
     lines.push(`  ${pluginNameLiteral}: {`)
     for (const n of overridable) {
       lines.push(
-        `    [${JSON.stringify(n)}]: (...args: unknown[]) => { componentRegistry.setOptionOverrides(${pluginNameLiteral}, args[0] as Record<string, unknown>); },`,
+        `    [${toSafeJsStringLiteral(n)}]: (...args: unknown[]) => { componentRegistry.setOptionOverrides(${pluginNameLiteral}, args[0] as Record<string, unknown>); },`,
       )
     }
     lines.push(`  },`)
@@ -1040,9 +1040,9 @@ export async function regeneratePluginIndex(options: { verbose?: boolean } = {})
     const unsafe = overridable.filter((n) => !isSafeIdentifier(n))
 
     if (unique.length > 0) {
-      const pluginNameLiteral = JSON.stringify(pluginName)
+      const pluginNameLiteral = toSafeJsStringLiteral(pluginName)
       for (const n of unique) {
-        lines.push(`export const ${n} = plugins[${pluginNameLiteral}][${JSON.stringify(n)}]`)
+        lines.push(`export const ${n} = plugins[${pluginNameLiteral}][${toSafeJsStringLiteral(n)}]`)
       }
     }
 
@@ -1141,6 +1141,25 @@ function isSafeIdentifier(name: string): boolean {
 
 function uniqueSafeIdentifiers(names: string[]): string[] {
   return names.filter((name) => isSafeIdentifier(name))
+}
+
+function toSafeJsStringLiteral(value: string): string {
+  return JSON.stringify(value).replace(/[<>/\u2028\u2029]/g, (char) => {
+    switch (char) {
+      case "<":
+        return "\\u003C"
+      case ">":
+        return "\\u003E"
+      case "/":
+        return "\\u002F"
+      case "\u2028":
+        return "\\u2028"
+      case "\u2029":
+        return "\\u2029"
+      default:
+        return char
+    }
+  })
 }
 
 function resolveOriginalName(exportName: string, dtsContent: string): string {

@@ -81,6 +81,25 @@ function uniqueSafeIdentifiers(names) {
   return names.filter((name) => isSafeIdentifier(name))
 }
 
+function toSafeJsStringLiteral(value) {
+  return JSON.stringify(value).replace(/[<>/\u2028\u2029]/g, (char) => {
+    switch (char) {
+      case "<":
+        return "\\u003C"
+      case ">":
+        return "\\u003E"
+      case "/":
+        return "\\u002F"
+      case "\u2028":
+        return "\\u2028"
+      case "\u2029":
+        return "\\u2029"
+      default:
+        return char
+    }
+  })
+}
+
 const execAsync = promisify(execCb)
 const execFileAsync = promisify(execFileCb)
 
@@ -365,11 +384,11 @@ async function regeneratePluginIndex() {
   )
   for (const [pluginName, { overridable }] of pluginExports) {
     if (overridable.length === 0) continue
-    const pluginNameLiteral = JSON.stringify(pluginName)
+    const pluginNameLiteral = toSafeJsStringLiteral(pluginName)
     lines.push(`  ${pluginNameLiteral}: {`)
     for (const n of overridable) {
       lines.push(
-        `    [${JSON.stringify(n)}]: (...args: unknown[]) => { componentRegistry.setOptionOverrides(${pluginNameLiteral}, args[0] as Record<string, unknown>); },`,
+        `    [${toSafeJsStringLiteral(n)}]: (...args: unknown[]) => { componentRegistry.setOptionOverrides(${pluginNameLiteral}, args[0] as Record<string, unknown>); },`,
       )
     }
     lines.push(`  },`)
@@ -385,9 +404,9 @@ async function regeneratePluginIndex() {
     const conflicting = overridable.filter((n) => (nameCount.get(n) ?? 0) > 1)
 
     if (unique.length > 0) {
-      const pluginNameLiteral = JSON.stringify(pluginName)
+      const pluginNameLiteral = toSafeJsStringLiteral(pluginName)
       for (const n of unique) {
-        lines.push(`export const ${n} = plugins[${pluginNameLiteral}][${JSON.stringify(n)}]`)
+        lines.push(`export const ${n} = plugins[${pluginNameLiteral}][${toSafeJsStringLiteral(n)}]`)
       }
     }
 
